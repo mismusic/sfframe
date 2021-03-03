@@ -164,7 +164,7 @@ class Test
 ``` 
 
 #### 命令行使用方法
-**php sf sf:list  获取命令列表**  
-**php sf make:controller 创建控制器类 参数 --class 类名  -n | --namespace=app\controller 命名空间**
+php sf sf:list  获取命令列表
+php sf make:controller 创建控制器类 参数 --class 类名  -n | --namespace=app\controller 命名空间
 
 
