@@ -1,0 +1,14 @@
+[2021-02-27 10:17:41][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` in (1,3,4) or id is null and (`status` = 1 or (`sex` = "女" or `age` = 18)) or `name` like "艾%" limit 0,15 [0.100945s]
+[2021-02-27 10:17:41][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.100945"}
+[2021-02-27 10:17:46][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` in (1,3,4) or id is null and (`status` = 1 or (`sex` = "女" or `age` = 18)) or `name` like "艾%" limit 0,15 [0.000514s]
+[2021-02-27 10:17:46][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.000514"}
+[2021-02-27 10:18:20][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` in (1,3,4) or id is null and (`status` = 1 or (`sex` = "女" or `age` = 18)) or `name` like "艾%" limit 0,15 [0.000732s]
+[2021-02-27 10:18:20][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.000732"}
+[2021-02-27 10:45:44][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` = 1 limit 0,15 [0.017602s]
+[2021-02-27 10:45:44][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.017602"}
+[2021-02-27 10:57:17][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` in (1,3,4) or id is null and (`status` = 1 or (`sex` = "女" or `age` = 18)) or `name` like "艾%" limit 0,15 [0.006910s]
+[2021-02-27 10:57:17][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.006910"}
+[2021-02-27 10:59:47][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` in (1,3,4) or id is null and (`status` = 1 or (`sex` = "女" or `age` = 18)) or `name` like "艾%" limit 0,15 [0.006729s]
+[2021-02-27 10:59:47][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.006729"}
+[2021-02-27 10:59:49][SQL] select `id`,`name`,`sex`,`age` from `mis_user` where `id` in (1,3,4) or id is null and (`status` = 1 or (`sex` = "女" or `age` = 18)) or `name` like "艾%" limit 0,15 [0.000600s]
+[2021-02-27 10:59:49][DEBUG] 测试事件处理 app\listener\TestEvent {"runtime":"0.000600"}

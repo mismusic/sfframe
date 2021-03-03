@@ -1,0 +1,7 @@
+PHP Fatal error:  Uncaught LogicException: input parseParams type error in D:\install\phpstudy_pro\WWW\sfframe\test\cli\Input.php:99
+Stack trace:
+#0 D:\install\phpstudy_pro\WWW\sfframe\test\cli\opt.php(20): Input->parseParams()
+#1 {main}
+  thrown in D:\install\phpstudy_pro\WWW\sfframe\test\cli\Input.php on line 99
+'php' is not recognized as an internal or external command,
+operable program or batch file.

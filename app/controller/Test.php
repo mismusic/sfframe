@@ -1,15 +1,3 @@
-# sfframe
-this is simple fast frame
-
-### Usage
-**安装**
-> git clone https://github.com/mismusic/sfframe.git  
- 
-**配置根目录**
-/public
-
-**使用案例**
-```$xslt
 <?php
 
 namespace app\controller;
@@ -161,10 +149,3 @@ class Test
         //var_dump($sign);
     }
 }
-``` 
-
-#### 命令行使用方法
-**php sf sf:list  获取命令列表**  
-**php sf make:controller 创建控制器类 参数 --class 类名  -n | --namespace=app\controller 命名空间**
-
-
