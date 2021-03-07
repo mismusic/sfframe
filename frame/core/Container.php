@@ -60,20 +60,22 @@ class Container
     }
     public function make(string $abstract)
     {
-        return $this->resolve($abstract);
+        return $this->resolve($abstract, [], false, true);
     }
-    public function resolve(string $abstract, array $params = [], bool $isRecord = true)
+    public function resolve(string $abstract, array $params = [], bool $isRecord = true, bool $newInstance = false)
     {
-        if (isset($this->instances[$abstract])) {
-            return $this->instances[$abstract];
-        }
-        if (isset($this->classes[$abstract])) {
-            if (is_callable($this->classes[$abstract])) {
-                return $this->closure($this->classes[$abstract]);
+        if (empty($newInstance)) {
+            if (isset($this->instances[$abstract])) {
+                return $this->instances[$abstract];
             }
-        }
-        if ($aliasAbstract = $this->getAlias($abstract)) {
-            return $this->resolve($aliasAbstract, $params);
+            if (isset($this->classes[$abstract])) {
+                if (is_callable($this->classes[$abstract])) {
+                    return $this->closure($this->classes[$abstract]);
+                }
+            }
+            if ($aliasAbstract = $this->getAlias($abstract)) {
+                return $this->resolve($aliasAbstract, $params);
+            }
         }
         try {
             $parameters = CoreReflection::getConstructor($abstract);
