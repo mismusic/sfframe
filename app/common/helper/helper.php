@@ -72,6 +72,13 @@ if (! function_exists('response')) {
     }
 }
 
+if (! function_exists('dd')) {
+    function dd($var, ... $moreVars) {
+        dump($var, ... $moreVars);
+        die();
+    }
+}
+
 if (! function_exists('find_dir')) {
     function find_dir(string $dir, string $pattern = null, int $level = null) :array
     {
@@ -216,5 +223,16 @@ if (! function_exists('array_contain_keys')) {
             }
         }
         return true;
+    }
+}
+
+if (! function_exists('class_name')) {
+    function class_name($class) :string
+    {
+        if (is_object($class)) {
+            $class = get_class($class);
+        }
+        $class = basename(str_replace('\\', '/', $class));
+        return $class;
     }
 }

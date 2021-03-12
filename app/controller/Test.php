@@ -5,6 +5,7 @@ namespace app\controller;
 use app\facade\DB;
 use app\facade\Event;
 use app\facade\Log;
+use app\facade\Route;
 use frame\core\App;
 use frame\core\command\Command;
 use frame\core\command\Input;
@@ -17,6 +18,7 @@ use frame\core\database\query\Query;
 use frame\core\Env;
 use frame\core\Request;
 use frame\core\Response;
+use frame\core\route\RouteDispatcher;
 
 class Test
 {
@@ -25,10 +27,10 @@ class Test
     {
         $this->config = $config;
     }
-    public function index(Request $request, Response $response, $id)
+    public function index(Request $request, Response $response)
     {
         $data = [
-            'id' => $id,
+            //'id' => $id,
             'name' => $request->get('name'),
             'params' => $request->get(),
             'ip' => $request->ip(),
@@ -147,5 +149,41 @@ class Test
         $sign = 'command:name {-Q | --option=test : The option description.}
         {foo=bar:test描述} {argument* : The argument description.}';
         //var_dump($sign);
+    }
+    public function route(RouteDispatcher $routeDispatcher, Request $request)
+    {
+        $routeDispatcher->prefix('/index')
+            ->namespace('app\\controller\\index')
+            ->middleware('indexMiddleware')
+            ->group(function ($routes) {
+                $routes->addRule('/route', ['Test', 'route'], ['patch', 'put', 'options'])->prefix('/test/')->name('route');
+                $routes->post('/test', ['Test', 'test'])->middleware('TestMiddleware')->name('test');
+                $routes->prefix('/Admin')
+                    ->name('admin.')
+                    ->namespace('admin')
+                    ->group(function ($routes) {
+                        $routes->addRule('user/', ['User', 'register'], 'post')->prefix('/my/')->middleware('UserMiddleware')->name('reg');
+                    });
+            })
+            ->name('index.');
+        $routeDispatcher->addRule('test/route/<id?>/<name>', ['Foo', 'index'], 'get')->name('foo.bar')
+            //->match('name', '.+')
+            ->match('id', '\d+')
+            ->namespace('app');
+        $routeDispatcher->prefix('/group2')->group(function ($routes) {
+            $routes->only('custom', ['C', 'm'], ['get', 'post'])->name('cust');
+        })->name('group222.');
+        //$routes = $routeDispatcher->getRouteList();
+        //$routeDispatcher->findRoute($request);
+        //var_dump($routes);
+        //foreach ($routes as $k => $route) {
+            //var_dump($route->getMatches());
+            //$route = $route->getRoute();
+            /*var_dump([
+                $k, //$route['variables'], $route['matches'], //
+                //$route['route'], $route['name'], //$route['method'], //$route['middleware'], $route['callable'],
+            ]);*/
+        //}
+        return 'this Test route';
     }
 }

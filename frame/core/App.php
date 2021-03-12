@@ -2,6 +2,8 @@
 
 namespace frame\core;
 
+use app\facade\Config as ConfigFacade;
+use frame\core\Config;
 use app\console\AppConsole;
 use app\exception\AppException;
 use frame\core\console\Console;
@@ -9,6 +11,7 @@ use frame\core\database\interfaces\DBInterface;
 use frame\core\database\Mysql;
 use frame\core\event\Event;
 use frame\core\log\Log;
+use frame\core\route\RouteDispatcher;
 
 class App
 {
@@ -24,14 +27,18 @@ class App
      */
     public static function init()
     {
-        App::autoload();
+        static::autoload();
         static::$container = static::getContainer();
         $containerParams = App::initContainer();
         foreach ($containerParams as $containerAbstract => $containerConcrete) {
             static::$container->bind($containerAbstract, $containerConcrete);
         }
+        $configProviders = ConfigFacade::get('provider');
+        foreach ($configProviders as $providerAbstract => $providerConcrete) {
+            static::$container->bind($providerAbstract, $providerConcrete);
+        }
+        static::loadRouter();
         static::dbInit();
-        App::parseRouter();
     }
     public static function consoleInit()
     {
@@ -75,6 +82,7 @@ class App
             'app' => static::$container->resolve(App::class),
             'container' => static::$container,
             Console::class => AppConsole::class,
+            'route' => RouteDispatcher::class,
             'request' => static::$container->resolve(Request::class),
             'response' => static::$container->resolve(Response::class),
             'env' => Env::class,
@@ -107,20 +115,23 @@ class App
     public static function run()
     {
         App::init();
-        $namespace = str_replace('\\', '/', trim(static::$namespace, '\\'));
-        $controller = ucfirst(static::$router['controller']);
-        $method = static::$router['method'];
-        $class = '\\' . trim(static::$namespace, '\\') . '\\' . $controller;
-        $controllerPath = ROOT_PATH . "/{$namespace}/{$controller}.php";
-        if (! file_exists($controllerPath)) {
-            throw new AppException('app run error controller not exists');
-        }
-        if (! method_exists($class, $method)) {
-            throw new AppException('app run error method not exists');
-        }
-        $params = static::$container->resolve('request')->all();
-        $response = static::$container->resolveMethod($class, $method, $params);
+        $container = Container::getInstance();
+        $request = $container->resolve('request');
+        $route = $container->resolve('route');
+        $response = $route->run($request);
         return $response;
+    }
+
+    /**
+     * 加载用户定义的路由
+     */
+    public static function loadRouter()
+    {
+        $routeFileList = find_dir(static::routePath(), '.php');
+        // 加载
+        foreach ($routeFileList as $routeFile) {
+            require_once $routeFile;
+        }
     }
     /**
      * 发送响应内容
@@ -151,15 +162,19 @@ class App
     }
     public static function appPath()
     {
-        return self::rootPath() . DIRECTORY_SEPARATOR . 'app';
+        return static::rootPath() . DIRECTORY_SEPARATOR . 'app';
+    }
+    public static function routePath()
+    {
+        return static::rootPath() . DIRECTORY_SEPARATOR . 'route';
     }
     public static function configPath()
     {
-        return self::rootPath() . DIRECTORY_SEPARATOR . 'config';
+        return static::rootPath() . DIRECTORY_SEPARATOR . 'config';
     }
     public static function logPath()
     {
-        return self::rootPath() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'log';
+        return static::rootPath() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'log';
     }
     protected static function dbInit()
     {

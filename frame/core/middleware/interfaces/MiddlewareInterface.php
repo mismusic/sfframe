@@ -1,6 +1,6 @@
 <?php
 
-namespace frame\core\route\middleware\interfaces;
+namespace frame\core\middleware\interfaces;
 
 use frame\core\Request;
 

@@ -3,6 +3,8 @@
 namespace frame\core;
 
 use app\exception\RequestException;
+use frame\core\route\RouteDispatcher;
+use app\facade\Config;
 
 class Request
 {
@@ -14,6 +16,11 @@ class Request
     protected $headers = [];
     protected $files = [];
     protected $method;
+    /**
+     * @var RouteDispatcher
+     */
+    protected $routeDispatcher;
+
     public function __construct()
     {
         if ($this->isRequestJson()) {
@@ -262,7 +269,53 @@ class Request
     {
         return $this->content;
     }
-
+    public function getRouter() :array
+    {
+        return [
+            'method' => strtoupper($this->getMethod()),
+            'route' => '/' . trim($this->path(), '/'),
+        ];
+    }
+    public function getRoute()
+    {
+        return $this->routeDispatcher ? $this->routeDispatcher->getRoute() : null;
+    }
+    public function parseRouter() :array
+    {
+        $path = trim($this->path());
+        $defaultRoute = Config::get('route.defaultRoute');
+        $defaultNamespace = '\\' . trim($defaultRoute['namespace'], '\\');
+        $defaultController = '\\' . trim($defaultNamespace, '\\') . '\\' . ltrim($defaultRoute['controller'], '\\');
+        $defaultAction = $defaultRoute['action'];
+        if (empty($path) || $path === '/') {
+            return [
+                'controller' => $defaultController,
+                'action' => $defaultAction,
+            ];
+        }
+        $path = trim(trim($path, '/'));
+        if ($offset = strrpos($path, '/')) {
+            $controller = $defaultNamespace . '\\' . str_replace('/', '\\', substr($path, 0, $offset));
+            $pathArr = [
+                'controller' => $controller,
+                'action' => substr($path,  $offset + 1),
+            ];
+        } else {
+            $pathArr = [
+                'controller' => $defaultNamespace . '\\' . str_replace('/', '\\', $path),
+                'action' => $defaultAction,
+            ];
+        }
+        return $pathArr;
+    }
+    public function setRouteDispatcher(RouteDispatcher $routeDispatcher)
+    {
+        $this->routeDispatcher = $routeDispatcher;
+    }
+    public function getRouteDispatcher()
+    {
+        return $this->routeDispatcher;
+    }
     protected function realIp()
     {
         $ip = $_SERVER['REMOTE_ADDR'];

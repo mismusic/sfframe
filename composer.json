@@ -1,0 +1,30 @@
+{
+    "name": "mismusic/sfframe",
+    "description": "this is simple fast frame",
+    "type": "project",
+    "keywords": [
+        "sfframe",
+        "mismusic",
+        "fast"
+    ],
+    "homepage": "http://mismusic.cn",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "mismusic",
+            "email": "2543205432@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "symfony/var-dumper": "^5.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "app\\": "app"
+        },
+        "files": [
+            "app/common/helper/helper.php"
+        ]
+    }
+}

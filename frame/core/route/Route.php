@@ -2,100 +2,129 @@
 
 namespace frame\core\route;
 
-class Route
+class Route extends Router
 {
-    const HTTP_METHOD_GET = 'GET';
-    const HTTP_METHOD_POST = 'POST';
-    const HTTP_METHOD_PUT = 'PUT';
-    const HTTP_METHOD_PATCH = 'PATCH';
-    const HTTP_METHOD_DELETE = 'DELETE';
-    const HTTP_METHOD_OPTIONS = 'OPTIONS';
+    protected $matches = [];
+    protected $variables = [];
 
-    protected $prefix = '';
-    protected $namespace = '';
-    protected $name = '';
-    protected $route;
-    protected $middleware = [];
-    protected $callable;
-
-    public static function newRoute()
+    public function addRule(string $route, $action, $method = 'GET')
     {
-        return new static();
-    }
-    public function addRule(string $route, $action, string $method = 'get')
-    {
-        $method = strtoupper($method);
         if (empty($route)) {
             throw new \LogicException('add rule param route not empty');
         }
-        if (! in_array($method, $this->getMethodList())) {
-            throw new \LogicException('route http method not exists');
+        if (! is_string($method) && ! is_array($method)) {
+            throw new \InvalidArgumentException('add rule param method type must is string or array');
         }
-        if (! is_callable($action) && ! is_array($action)) {
-            throw new \InvalidArgumentException('route action type must is callable or array');
+        if (! is_callable($action, true)) {
+            throw new \InvalidArgumentException('route action type must is callable');
         }
+        if (is_array($method)) {
+            foreach ($method as & $methodItem) {
+                $methodItem = strtoupper($methodItem);
+                if (! in_array($methodItem, $this->getMethodList())) {
+                    throw new \LogicException('route http method type not allow');
+                }
+            }
+        } else {
+            $method = strtoupper($method);
+            if (! in_array($method, $this->getMethodList()) && ! $method = '*') {
+                throw new \LogicException('route http method not exists');
+            }
+            $method = $method === '*' ? $this->getMethodList() : [$method];
+        }
+        $this->method = $method;
         $route = '/' . trim($route, '/');
-        $route = $this->prefix . $route;
         $this->route = $route;
-        if (is_callable($action)) {
-            $this->callable = $action;
-        } else {
-            [$controller, $action] = $action;
-            $controller = $this->namespace . '\\' . trim($controller, '\\');
-            $this->callable = [
-                'controller' => $controller,
-                'action' => $action,
-            ];
+        if (preg_match_all('#< ( [a-zA-Z][\w]*\?? ) >(?>/?)#ix', $route, $mat))
+        {
+            if (! empty($mat)) {
+                 foreach ($mat[1] as $matItem) {
+                     $isOptional = false;
+                     if (substr($matItem, -1, 1) === '?') {
+                         $matItem = substr($matItem, 0, -1);
+                         $isOptional = true;
+                     }
+                     $this->variables[$matItem] = [
+                         'name' => $matItem,
+                         'is_optional' => $isOptional,
+                     ];
+                 }
+            }
+        }
+        if (is_callable($action, true)) {
+            if (is_array($action)) {
+                [$controller, $action] = $action;
+                $controller = trim($controller, '\\');
+                $this->callable = [
+                    'controller' => $controller,
+                    'action' => $action,
+                ];
+            } else {
+                $this->callable = $action;
+            }
         }
         return $this;
     }
-    public function prefix(string $prefix)
+    public function match($name, string $value = null)
     {
-        if (empty($prefix)) {
-            return $this;
+        if (is_string($name)) {
+            $this->matches[$name] = $value;
         }
-        $prefix = '/' . trim($prefix, '/');
-        $this->prefix = $prefix;
-        return $this;
-    }
-    public function namespace(string $namespace)
-    {
-        if (empty($namespace)) {
-            return $this;
-        }
-        $namespace = '\\' . trim($namespace, '\\');
-        $this->namespace = $namespace;
-        return $this;
-    }
-    public function name(string $name)
-    {
-        if (empty($name)) {
-            return $this;
-        }
-        if (! preg_match('/^[\w-.]+$/i', $name, $mat)) {
-            throw new \RuntimeException('route name non compliance');
-        }
-        $this->name = $name;
-        return $this;
-    }
-    public function middleware($middleware)
-    {
-        if (empty($middleware)) {
-            return $this;
-        }
-        if (! is_array($middleware)) {
-            $middleware = [$middleware];
-        }
-        if (empty($middleware)) {
-            $this->middleware = $middleware;
-        } else {
-            $this->middleware = array_unique(array_merge($this->middleware, $middleware));
+        else if (is_array($name)) {
+            $this->matches = array_merge($this->matches, $name);
         }
         return $this;
     }
     public function getRoute()
     {
-        return get_object_vars($this);
+        $route = [
+            'method' => $this->method,
+            'route' => $this->route,
+            'prefix' => $this->prefix,
+            'namespace' => $this->namespace,
+            'name' => $this->name,
+            'middleware' => $this->middleware,
+            'variables' => $this->variables,
+            'matches' => $this->matches,
+            'callable' => $this->callable,
+        ];
+        $route['route'] = $this->prefix . $route['route'];
+        if (is_array($route['callable'])) {
+            $route['callable']['controller'] = $this->namespace . '\\' . $route['callable']['controller'];
+        }
+        return $route;
+    }
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+    public function getRoutePath()
+    {
+        return $this->route;
+    }
+    public function getMethod()
+    {
+        return $this->method;
+    }
+    public function getMatches() :array
+    {
+        $defaultPattern = '(?<%s>[^\/]+)';
+        $result = [];
+        foreach ($this->variables as $variable) {
+            $name = $variable['name'];
+            $optional = '';
+            if ($variable['is_optional']) {
+                $optional = '?';
+                $name .= $optional;
+            }
+            if (isset($this->matches[$variable['name']])) {
+                $result[$name] = sprintf('%s(?<%s>%s)%s', $optional, $variable['name'],
+                    addcslashes($this->matches[$variable['name']], '#'), $optional);
+            } else {
+                $result[$name] = $optional . sprintf($defaultPattern . $optional, $variable['name']);
+            }
+        }
+        return $result;
     }
     protected function getMethodList() :array
     {

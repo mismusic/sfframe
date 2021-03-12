@@ -54,6 +54,13 @@ class CoreReflection
         return self::parseParams($parameters, $required);
     }
 
+    public static function getFunction($function, bool $required = false)
+    {
+        $rcFunc = new \ReflectionFunction($function);
+        $parameters = $rcFunc->getParameters();
+        return self::parseParams($parameters, $required);
+    }
+
     public static function getParameter($class, string $method, string $parameter)
     {
         $parameter = new \ReflectionParameter([$class, $method], $parameter);
@@ -106,6 +113,12 @@ class CoreReflection
             throw new ContainerException('container resolve failed');
         }
         return (new \ReflectionMethod($class, $method))->invokeArgs($class, $args);
+    }
+
+    public static function newFunction($function, array $args = [])
+    {
+        $rcFunc = new \ReflectionFunction($function);
+        return $rcFunc->invokeArgs($args);
     }
 
     private static function parseParams(array $parameters, bool $required = false)

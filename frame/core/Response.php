@@ -68,6 +68,7 @@ class Response
     protected function dispatch()
     {
         if (! headers_sent()) {
+            header_remove();
             http_response_code($this->statusCode);
             foreach ($this->headers as $key => $value)
             {

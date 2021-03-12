@@ -35,6 +35,7 @@ class Container
     public function bind(string $abstract, $concrete = null)
     {
         // 删除以前的绑定关系
+        $abstract = ltrim($abstract, '\\');
         $this->removeRelation($abstract);
         if (is_callable($concrete)) {
             $this->classes[$abstract] = $concrete;
@@ -50,9 +51,13 @@ class Container
                 return $abstract;
             };
         } else {
-            $this->classes[$abstract] = function (App $app) use ($concrete) {
+            $this->classes[$abstract] = function (App $app) use ($abstract, $concrete) {
                 if (class_exists($concrete)) {
-                    return $app->getContainer()->resolve($concrete);
+                    if ($abstract !== $concrete) {
+                        return $app->getContainer()->resolve($concrete);
+                    } else {
+                        return $app->getContainer()->make($concrete);
+                    }
                 }
                 return $concrete;
             };
@@ -95,6 +100,12 @@ class Container
         $args = $this->parseArgs($parameters, $params);
         return CoreReflection::newMethod($abstract, $method, $args);
     }
+    public function resolveClosure($function, array $params = [])
+    {
+        $parameters = CoreReflection::getFunction($function);
+        $args = $this->parseArgs($parameters, $params);
+        return CoreReflection::newFunction($function, $args);
+    }
     public function alias(string $alias, string $abstract)
     {
         $this->alias[$alias] = $abstract;
@@ -122,6 +133,16 @@ class Container
         }
         return false;
     }
+    public function check(string $abstract) :bool
+    {
+        if ($alias = $this->getAlias($abstract)) {
+            $abstract = $alias;
+        }
+        if (isset($this->classes[$abstract]) || isset($this->instances[$abstract])) {
+            return true;
+        }
+        return false;
+    }
     public function removeAlias(string $alias) :void
     {
         if (isset($this->alias[$alias])) {
@@ -142,14 +163,14 @@ class Container
             unset($this->instances[$abstract]);
         }
     }
-    private function closure($callable)
+    protected function closure($callable)
     {
         if (is_callable($callable)) {
             return $callable($this->resolve(App::class));
         }
         return $callable;
     }
-    private function parseArgs(array $parameters, array $params)
+    protected function parseArgs(array $parameters, array $params)
     {
         $args = [];
         foreach ($parameters as $parameter) {
@@ -173,7 +194,9 @@ class Container
                     throw new ContainerException('container resolve failed');
                 }
                 $args[] = $parseInstance;
-                $this->bind($typeClassName, $parseInstance);
+                if (! $this->instances[$typeClassName]) {
+                    $this->bind($typeClassName, $parseInstance);
+                }
             }
         }
         return $args;
